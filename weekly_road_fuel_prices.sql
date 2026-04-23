@@ -31,11 +31,11 @@ WITH (FORMAT csv, HEADER true, DELIMITER ',', ENCODING 'UTF8');
 SELECT 
     week_date,
     ulsp_price,
-    ulsd_price,
-    ulsp_duty AS duty,
-    ulsp_vat AS vat,
-    ulsp_price - (ulsp_duty + ulsp_vat) AS ulsp_raw_price,
-    ulsd_price - (ulsd_duty + ulsd_vat) AS ulsd_raw_price
+    ulsd_price
+    -- ulsp_duty AS duty,
+    -- ulsp_vat AS vat,
+    -- ulsp_price - (ulsp_duty + ulsp_vat) AS ulsp_raw_price,
+    -- ulsd_price - (ulsd_duty + ulsd_vat) AS ulsd_raw_price
 FROM fuel_prices
 ORDER BY week_date;
 
