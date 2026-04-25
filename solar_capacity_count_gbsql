@@ -24,6 +24,8 @@ FROM 'D:/Solar Energy Report/Data Analysis/Solar-Analysis/solar_capacity_gb.csv'
 DELIMITER ','
 CSV HEADER;
 
+
+-- TABLE OPTION 1: WIDE FORMAT
 SELECT 
     date,
     -- region,
@@ -40,34 +42,97 @@ FROM solar_capacity_by_region
 WHERE date >= '2010-01-01'
 ORDER BY date;
 
+-- TABLE OPTION 2 LONG FORMAT (for easier grouping in visualization tools)
+SELECT date, region, 'Residential'  AS tier, 1 AS tier_order,
+       (btw_0_and_4_kw + btw_4_and_10_kw) AS capacity_mw
+FROM solar_capacity_by_region
+UNION ALL
+SELECT date, region, 'Commercial', 2,
+       (btw_10_and_50_kw + btw_50kw_and_5_mw)
+FROM solar_capacity_by_region
+UNION ALL
+SELECT date, region, 'Utility',    3,
+       (btw_5_and_25_mw + more_than_25_mw)
+FROM solar_capacity_by_region
+ORDER BY date, tier_order;
+
+-- CREATE OR REPLACE VIEW solar_capacity_by_tier
+CREATE OR REPLACE VIEW solar_capacity_by_tier AS
+SELECT date, region, 'Residential'  AS tier, 1 AS tier_order,
+       (btw_0_and_4_kw + btw_4_and_10_kw) AS capacity_mw
+FROM solar_capacity_by_region
+UNION ALL
+SELECT date, region, 'Commercial', 2,
+       (btw_10_and_50_kw + btw_50kw_and_5_mw)
+FROM solar_capacity_by_region
+UNION ALL
+SELECT date, region, 'Utility',    3,
+       (btw_5_and_25_mw + more_than_25_mw)
+FROM solar_capacity_by_region;
+
+
 ---------------- COUNT ----------------
 DROP TABLE IF EXISTS solar_count_by_region;
 
 CREATE TABLE solar_count_by_region (
     region TEXT,
     date DATE,
-    btw_0_and_4_kw NUMERIC,
-    btw_4_and_10_kw NUMERIC,
-    btw_10_and_50_kw NUMERIC,
-    btw_50kw_and_5_mw NUMERIC,
-    btw_5_and_25_mw NUMERIC,
-    more_than_25_mw NUMERIC,
-    total NUMERIC
+    btw_0_and_4_kw BIGINT,
+    btw_4_and_10_kw BIGINT,
+    btw_10_and_50_kw BIGINT,
+    btw_50kw_and_5_mw BIGINT,
+    btw_5_and_25_mw BIGINT,
+    more_than_25_mw BIGINT,
+    total BIGINT
 );
 
 COPY solar_count_by_region
-FROM 'D:\Solar Energy Report\Data Analysis\Solar-Analysis\solar_count_gb.csv'
+FROM 'D:/Solar Energy Report/Data Analysis/Solar-Analysis/solar_count_gb.csv'
 DELIMITER ','
 CSV HEADER;
 
+
+-- TABLE OPTION 1: WIDE FORMAT
 SELECT 
     date,
-    -- btw_0_and_4_kw ,
-    -- btw_4_and_10_kw ,
-    -- btw_10_and_50_kw ,
-    -- btw_50kw_and_5_mw ,
-    -- btw_5_and_25_mw ,
-    -- more_than_25_mw ,
-    total
+    -- region,
+    -- Three-tier grouping
+    (btw_0_and_4_kw + btw_4_and_10_kw)                      AS residential_count,
+    (btw_10_and_50_kw + btw_50kw_and_5_mw)                  AS commercial_count,
+    (btw_5_and_25_mw + more_than_25_mw)                     AS utility_count,
+    total                                                   AS total_count,
+    -- Tier share of total (useful for 100% stacked charts)
+    ROUND(100.0 * (btw_0_and_4_kw + btw_4_and_10_kw) / NULLIF(total, 0), 2)    AS residential_pct,
+    ROUND(100.0 * (btw_10_and_50_kw + btw_50kw_and_5_mw) / NULLIF(total, 0), 2) AS commercial_pct,
+    ROUND(100.0 * (btw_5_and_25_mw + more_than_25_mw) / NULLIF(total, 0), 2)    AS utility_pct
 FROM solar_count_by_region
-WHERE date >= '2010-01-01';
+WHERE date >= '2010-01-01'
+ORDER BY date;
+
+-- TABLE OPTION 2: LONG FORMAT (for easier grouping in visualization tools)
+SELECT date, region, 'Residential'  AS tier, 1 AS tier_order,
+       (btw_0_and_4_kw + btw_4_and_10_kw) AS install_count
+FROM solar_count_by_region
+UNION ALL
+SELECT date, region, 'Commercial', 2,
+       (btw_10_and_50_kw + btw_50kw_and_5_mw)
+FROM solar_count_by_region
+UNION ALL
+SELECT date, region, 'Utility',    3,
+       (btw_5_and_25_mw + more_than_25_mw)
+FROM solar_count_by_region
+ORDER BY date, tier_order;
+
+-- CREATE OR REPLACE VIEW solar_count_by_tier
+CREATE OR REPLACE VIEW solar_count_by_tier AS
+SELECT date, region, 'Residential'  AS tier, 1 AS tier_order,
+       (btw_0_and_4_kw + btw_4_and_10_kw) AS install_count
+FROM solar_count_by_region
+UNION ALL
+SELECT date, region, 'Commercial', 2,
+       (btw_10_and_50_kw + btw_50kw_and_5_mw)
+FROM solar_count_by_region
+UNION ALL
+SELECT date, region, 'Utility',    3,
+       (btw_5_and_25_mw + more_than_25_mw)
+FROM solar_count_by_region;
